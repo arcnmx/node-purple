@@ -28,13 +28,19 @@ typedef struct {
 typedef struct {
     PurpleAccount *account;
     char* who;
-    GList* items;
+    GSList* items;
 } e_UserInfoResponse;
 
 typedef struct {
     char* label;
     char* value;
 } e_UserInfoResponseItem;
+static void free_UserInfoResponseItem(void* data) {
+    e_UserInfoResponseItem* res = (e_UserInfoResponseItem*)data;
+    free(res->label);
+    free(res->value);
+    free(res);
+}
 
 napi_value getJsObjectForSignalEvent(napi_env env, s_signalEventData *eventData) {
     napi_value evtObj;
@@ -91,7 +97,7 @@ napi_value getJsObjectForSignalEvent(napi_env env, s_signalEventData *eventData)
     if(strcmp(eventData->signal, "user-info-response") == 0) {
         e_UserInfoResponse msgData = *(e_UserInfoResponse*)eventData->data;
         napi_value jkey, jvalue;
-        GList* l;
+        GSList* l;
         for (l = msgData.items; l != NULL; l = l->next) {
             e_UserInfoResponseItem item = *(e_UserInfoResponseItem*)l->data;
             napi_create_string_utf8(env, item.label, NAPI_AUTO_LENGTH, &jkey);
@@ -102,13 +108,14 @@ napi_value getJsObjectForSignalEvent(napi_env env, s_signalEventData *eventData)
             }
             napi_set_property(env, evtObj, jkey, jvalue);
         }
-        g_slist_free_full(msgData.items, free);
+        g_slist_free_full(msgData.items, free_UserInfoResponseItem);
 
         napi_value acct = nprpl_account_create(env, msgData.account);
         napi_set_named_property(env, evtObj, "account", acct);
 
         napi_create_string_utf8(env, msgData.who, NAPI_AUTO_LENGTH, &value);
         napi_set_named_property(env, evtObj, "who", value);
+        free(msgData.who);
     }
 
     if (strcmp(eventData->signal, "chat-joined") == 0) {
@@ -127,16 +134,19 @@ napi_value getJsObjectForSignalEvent(napi_env env, s_signalEventData *eventData)
         if (msgData.message != NULL) {
             napi_create_string_utf8(env, msgData.message, NAPI_AUTO_LENGTH, &value);
             napi_set_named_property(env, evtObj, "message", value);
+            free(msgData.message);
         }
 
         if (msgData.roomName != NULL) {
             napi_create_string_utf8(env, msgData.roomName, NAPI_AUTO_LENGTH, &value);
             napi_set_named_property(env, evtObj, "room_name", value);
+            free(msgData.roomName);
         }
 
         if(msgData.sender != NULL) {
             napi_create_string_utf8(env, msgData.sender, NAPI_AUTO_LENGTH, &value);
             napi_set_named_property(env, evtObj, "sender", value);
+            free(msgData.sender);
         }
 
         napi_create_object(env, &value);
@@ -188,11 +198,8 @@ void handleReceivedMessage(PurpleAccount *account, char *sender, char *buffer, P
     ev->signal = cbData.signal;
     msgData->account = account;
 
-    msgData->buffer = malloc(strlen(buffer) + 1);
-    strcpy(msgData->buffer, buffer);
-
-    msgData->sender = malloc(strlen(sender) + 1);
-    strcpy(msgData->sender, sender);
+    msgData->buffer = strdup(buffer);
+    msgData->sender = strdup(sender);
 
 //    // TODO: Do not create a convo for chats
 //    // The first message won't have a conversation, so create it.
@@ -217,24 +224,21 @@ void handleInvited(PurpleAccount *account, const char *inviter, const char *room
 
 
     if (inviter != NULL) {
-        msgData->sender = malloc(strlen(inviter) + 1);
-        strcpy(msgData->sender, inviter);
+        msgData->sender = strdup(inviter);
     } else {
         msgData->sender = NULL;
     }
 
 
     if (room_name != NULL) {
-        msgData->roomName = malloc(strlen(room_name) + 1);
-        strcpy(msgData->roomName, room_name);
+        msgData->roomName = strdup(room_name);
     } else {
         msgData->roomName = NULL;
     }
 
 
     if (message != NULL) {
-        msgData->message = malloc(strlen(message) + 1);
-        strcpy(msgData->message, message);
+        msgData->message = strdup(message);
     } else {
         msgData->message = NULL;
     }
@@ -274,8 +278,7 @@ void handleAccountConnectionError(PurpleAccount *account, PurpleConnectionError 
     s_signalEventData *ev = malloc(sizeof(s_signalEventData));
     s_EventDataConnectionError *msgData = malloc(sizeof(s_EventDataConnectionError));
     msgData->account = account;
-    msgData->description = malloc(strlen(description) + 1);
-    strcpy(msgData->description, description);
+    msgData->description = strdup(description);
     msgData->type = type;
     ev->data = msgData;
     ev->signal = "account-connection-error";
@@ -283,10 +286,10 @@ void handleAccountConnectionError(PurpleAccount *account, PurpleConnectionError 
     signalling_push(ev);
 }
 
-void handleUserInfo(PurpleConnection *gc, const char *who, PurpleNotifyUserInfo *user_info) {
+void* handleUserInfo(PurpleConnection *gc, const char *who, PurpleNotifyUserInfo *user_info) {
     GList* entries = purple_notify_user_info_get_entries(user_info);
     if (entries == NULL) {
-        return;
+        return NULL;
     }
 
     s_signalEventData *ev = malloc(sizeof(s_signalEventData));
@@ -305,21 +308,20 @@ void handleUserInfo(PurpleConnection *gc, const char *who, PurpleNotifyUserInfo 
         }
         dest = malloc(sizeof(e_UserInfoResponseItem));
 
-        char* label = purple_notify_user_info_entry_get_label(src);
-        dest->label = malloc(strlen(label) + 1);
-        strcpy(dest->label, label);
+        const char* label = purple_notify_user_info_entry_get_label(src);
+        dest->label = strdup(label);
 
-        char* value = purple_notify_user_info_entry_get_value(src);
-        dest->value = malloc(strlen(value) + 1);
-        strcpy(dest->value, value);
+        const char* value = purple_notify_user_info_entry_get_value(src);
+        dest->value = strdup(value);
 
         msgData->items = g_slist_append(msgData->items, dest);
     }
-    msgData->who = malloc(strlen(who) + 1);
+    msgData->who = strdup(who);
     msgData->account = purple_connection_get_account(gc);
-    strcpy(msgData->who, who);
     ev->signal = "user-info-response";
     ev->freeMe = true;
     ev->data = msgData;
     signalling_push(ev);
+
+    return NULL;
 }

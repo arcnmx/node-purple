@@ -7,5 +7,6 @@
 
 char* napi_help_strfromval(napi_env env, napi_value opt);
 napi_value nprpl_conv_create(napi_env env, PurpleConversation *conv);
+napi_value nprpl_conv_chat_buddy_create(napi_env env, PurpleConvChatBuddy *buddy);
 
 #endif

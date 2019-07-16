@@ -11,7 +11,6 @@ typedef struct {
 
 void getSetupPurpleStruct(napi_env env, napi_callback_info info, s_setupPurple *o) {
     size_t argc = 1;
-    napi_status status;
     napi_value opts;
     s_setupPurple stemp;
     napi_valuetype type;
@@ -28,7 +27,9 @@ void getSetupPurpleStruct(napi_env env, napi_callback_info info, s_setupPurple *
 
     /* debugEnabled */
     if (getValueFromObject(env, opts, "debugEnabled", &type, &value)) {
-      status = napi_get_value_int32(env, value, &stemp.debugEnabled);
+      if (napi_ok != napi_get_value_int32(env, value, &stemp.debugEnabled)) {
+        napi_throw_error(env, NULL, "setupPurple expects debugEnabled to be numeric");
+	  }
     }
 
     if (napi_ok != napi_get_named_property(env, opts, "eventFunc", &stemp.eventFunc)) {
@@ -154,6 +155,11 @@ void wirePurpleSignalsIntoNode(napi_env env, napi_value eventFunc) {
                 PURPLE_CALLBACK(handleInvited), NULL);
 }
 
+static gboolean _purple_account_connect(PurpleAccount* account) {
+    purple_account_connect(account);
+    return FALSE;
+}
+
 void _accounts_restore_current_statuses()
 {
     GList *l;
@@ -172,7 +178,7 @@ void _accounts_restore_current_statuses()
         if (purple_account_get_enabled(account, purple_core_get_ui()) &&
             (purple_presence_is_online(account->presence)))
         {
-            timeout_add(timeout, (GSourceFunc)purple_account_connect, account);
+            timeout_add(timeout, (GSourceFunc)_purple_account_connect, account);
             timeout += 100;
         }
     }
@@ -222,7 +228,7 @@ napi_value setupPurple(napi_env env, napi_callback_info info) {
 
     purple_debug_set_enabled(opts.debugEnabled);
 
-    purple_conversation_set_ui_ops(&uiopts, NULL);
+    purple_conversations_set_ui_ops(&uiopts);
     purple_prefs_load();
     purple_set_blist(purple_blist_new());
     purple_core_init(STR_PURPLE_UI);

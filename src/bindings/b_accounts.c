@@ -82,7 +82,7 @@ PurpleAccount* __getacct(napi_env env, napi_callback_info info) {
 napi_value _purple_accounts_new(napi_env env, napi_callback_info info) {
     napi_value n_out;
     size_t argc = 3;
-    napi_value opts[2];
+    napi_value opts[3];
 
     napi_get_cb_info(env, info, &argc, opts, NULL, NULL);
     if (argc == 0) {
@@ -152,7 +152,7 @@ napi_value _purple_accounts_get_enabled(napi_env env, napi_callback_info info) {
     return n_out;
 }
 
-void _purple_accounts_set_enabled(napi_env env, napi_callback_info info) {
+napi_value _purple_accounts_set_enabled(napi_env env, napi_callback_info info) {
     size_t argc = 2;
     napi_value opts[2];
     PurpleAccount *account;
@@ -165,16 +165,28 @@ void _purple_accounts_set_enabled(napi_env env, napi_callback_info info) {
     gboolean enable;
     napi_get_value_bool(env, opts[1], (void*)&enable);
     purple_account_set_enabled(account, STR_PURPLE_UI, enable);
+
+    napi_value jres;
+    napi_get_undefined(env, &jres);
+    return jres;
 }
 
-void _purple_accounts_connect(napi_env env, napi_callback_info info) {
+napi_value _purple_accounts_connect(napi_env env, napi_callback_info info) {
     PurpleAccount *account = __getacct(env, info);
     purple_account_connect(account);
+
+    napi_value jres;
+    napi_get_undefined(env, &jres);
+    return jres;
 }
 
-void _purple_accounts_disconnect(napi_env env, napi_callback_info info) {
+napi_value _purple_accounts_disconnect(napi_env env, napi_callback_info info) {
     PurpleAccount *account = __getacct(env, info);
     purple_account_disconnect(account);
+
+    napi_value jres;
+    napi_get_undefined(env, &jres);
+    return jres;
 }
 
 napi_value _purple_account_is_connected(napi_env env, napi_callback_info info) {
@@ -220,7 +232,7 @@ napi_value _purple_account_get_status_types(napi_env env, napi_callback_info inf
     return status_array;
 }
 
-void _purple_account_set_status(napi_env env, napi_callback_info info) {
+napi_value _purple_account_set_status(napi_env env, napi_callback_info info) {
     PurpleAccount *account;
     char* id;
     bool active;
@@ -236,4 +248,8 @@ void _purple_account_set_status(napi_env env, napi_callback_info info) {
     napi_get_value_bool(env, opt[2], &active);
 
     purple_account_set_status(account, id, active, NULL);
+
+    napi_value jres;
+    napi_get_undefined(env, &jres);
+    return jres;
 }
