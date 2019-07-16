@@ -34,15 +34,13 @@
         "./src/napi_helpers.c"
       ],
       "include_dirs": [
-        "deps/pidgin-2.13.0/libpurple",
-        "./src/",
+        "./",
         "./src/bindings",
-        "./deps/libpurple ",
-        "<!(pkg-config --cflags glib-2.0 | cut -c 3-)"
+        "<!@(pkg-config --cflags-only-I purple glib-2.0 | sed s/-I//g)"
       ],
       "libraries": [
-        "-Wl,-rpath,./deps/libpurple -L ./deps/libpurple",
-        "<!(pkg-config --libs purple)"
+        "-Wl,-rpath,./deps/libpurple",
+        "<!@(pkg-config --libs glib-2.0 purple)"
       ]
     },
     {

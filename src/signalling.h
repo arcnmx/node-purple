@@ -6,7 +6,7 @@
 #include <account.h>
 #include <conversation.h>
 #include <prpl.h>
-#include "bindings/b_accounts.h"
+#include "b_accounts.h"
 
 typedef struct {
     char* signal;

@@ -1,4 +1,4 @@
-#include "helper.h"
+#include "src/helper.h"
 
 bool getValueFromObject(napi_env env, napi_value object, char* propStr, napi_valuetype *type, napi_value *value);
 

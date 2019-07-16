@@ -6,7 +6,7 @@
 #include <blist.h>
 #include <buddyicon.h>
 #include <status.h>
-#include "../napi_helpers.h"
+#include "src/napi_helpers.h"
 
 void buddy_bind_node(napi_env env,napi_value root);
 

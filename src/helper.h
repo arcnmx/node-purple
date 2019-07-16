@@ -10,8 +10,8 @@
 #include <conversation.h>
 #include <eventloop.h>
 #include <node_api.h>
-#include "eventloop.h"
-#include "signalling.h"
+#include "src/eventloop.h"
+#include "src/signalling.h"
 
 napi_value setupPurple(napi_env env, napi_callback_info info);
 napi_value pollEvents(napi_env env, napi_callback_info info);

@@ -3,13 +3,13 @@
 #include <node_api.h>
 #include <glib.h>
 
-#include "bindings/b_core.h"
-#include "bindings/b_plugins.h"
-#include "bindings/b_accounts.h"
-#include "bindings/b_buddy.h"
-#include "bindings/b_notify.h"
-#include "helper.h"
-#include "messaging.h"
+#include "b_core.h"
+#include "b_plugins.h"
+#include "b_accounts.h"
+#include "b_buddy.h"
+#include "b_notify.h"
+#include "src/helper.h"
+#include "src/messaging.h"
 
 
 napi_value Init(napi_env env, napi_value exports) {

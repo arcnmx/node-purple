@@ -1,4 +1,4 @@
-#include "signalling.h"
+#include "src/signalling.h"
 
 static GSList *eventQueue = NULL; // s_signalEventData
 

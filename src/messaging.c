@@ -1,4 +1,4 @@
-#include "messaging.h"
+#include "src/messaging.h"
 
 void messaging_sendIM(napi_env env, napi_callback_info info) {
     PurpleAccount* account;

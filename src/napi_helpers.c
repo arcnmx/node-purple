@@ -1,4 +1,5 @@
-#include "napi_helpers.h"
+#include "src/napi_helpers.h"
+
 char* napi_help_strfromval(napi_env env, napi_value opt) {
     size_t length = 0;
     char* buffer;
