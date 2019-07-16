@@ -1,4 +1,6 @@
 #include "eventloop.h"
+#include <sys/ioctl.h>
+
 /*
  Horrible stiching together of libuv's loop for purple.
  This works by getting the node env's loop and adding our own
@@ -251,6 +253,7 @@ guint input_add(int fd, PurpleInputCondition cond,
         // We don't have an input handler for that FD yet.
         poll_handle = malloc(sizeof(uv_poll_t));
         uv_poll_init(evLoopState.loop, poll_handle, fd);
+        int zero = 0; ioctl(fd, FIONBIO, &zero); // purple does *not* like its FD to be nonblocking
         pollsOpen = malloc(sizeof(uint32_t));
         *pollsOpen = 0;
     } else {
